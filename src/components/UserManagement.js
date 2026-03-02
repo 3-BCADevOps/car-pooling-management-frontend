@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { userAPI } from '../api/api';
 import '../styles/UserManagement.css';
 
+const getApiErrorMessage = (err, fallbackMessage) => {
+  const apiError = err?.response?.data?.error || err?.response?.data?.message;
+  if (typeof apiError === 'string' && apiError.trim()) {
+    return apiError;
+  }
+  if (err?.message === 'Network Error') {
+    return 'Unable to connect to server. Please check backend is running on port 8080.';
+  }
+  return fallbackMessage;
+};
+
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
@@ -22,10 +33,23 @@ const UserManagement = () => {
     try {
       setLoading(true);
       const response = await userAPI.getAll();
-      setUsers(response.data);
+      const data = response?.data;
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.content)
+        ? data.content
+        : Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.users)
+        ? data.users
+        : [];
+      setUsers(list);
+      if (!Array.isArray(data) && list.length === 0) {
+        console.warn('Unexpected users response shape:', data);
+      }
       setError('');
     } catch (err) {
-      setError('Failed to fetch users');
+      setError(getApiErrorMessage(err, 'Failed to fetch users'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -34,6 +58,9 @@ const UserManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (error) {
+      setError('');
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -54,7 +81,9 @@ const UserManagement = () => {
       resetForm();
       fetchUsers();
     } catch (err) {
-      setError(editingId ? 'Failed to update user' : 'Failed to create user');
+      setError(
+        getApiErrorMessage(err, editingId ? 'Failed to update user' : 'Failed to create user')
+      );
       console.error(err);
     }
   };
@@ -76,7 +105,7 @@ const UserManagement = () => {
         setError('');
         fetchUsers();
       } catch (err) {
-        setError('Failed to delete user');
+        setError(getApiErrorMessage(err, 'Failed to delete user'));
         console.error(err);
       }
     }

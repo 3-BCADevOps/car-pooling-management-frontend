@@ -15,7 +15,8 @@ const normalizeApiBaseUrl = (rawUrl) => {
 
 const getDefaultApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost') {
+    const localHostnames = ['localhost', '127.0.0.1', '::1'];
+    if (localHostnames.includes(window.location.hostname)) {
       return 'http://localhost:8080/api';
     }
     return '/api';

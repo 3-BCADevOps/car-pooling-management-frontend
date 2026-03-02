@@ -97,6 +97,16 @@ const BookingManagement = () => {
     }
   };
 
+  const handleEdit = (booking) => {
+    setFormData({
+      ride: { id: booking.ride?.id || '' },
+      passenger: { id: booking.passenger?.id || '' },
+      seatsBooked: booking.seatsBooked,
+    });
+    setEditingId(booking.id);
+    setError('');
+  };
+
   const handleConfirm = async (id) => {
     try {
       await bookingAPI.confirm(id);
@@ -170,7 +180,7 @@ const BookingManagement = () => {
             onChange={handleInputChange}
             required
           >
-            <option value="">Select Driver</option>
+            <option value="">Select Passenger</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.name}
@@ -223,6 +233,12 @@ const BookingManagement = () => {
                   <td>{new Date(booking.bookingDate).toLocaleString()}</td>
                   <td>{booking.status}</td>
                   <td>
+                    <button
+                      className="edit-btn"
+                      onClick={() => handleEdit(booking)}
+                    >
+                      Edit
+                    </button>
                     {booking.status === 'PENDING' && (
                       <>
                         <button
