@@ -19,9 +19,9 @@ const getDefaultApiBaseUrl = () => {
     if (localHostnames.includes(window.location.hostname)) {
       return 'http://localhost:8080/api';
     }
-    return '/api';
+    return 'https://car-pooling-management-backend.onrender.com/api';
   }
-  return '/api';
+  return 'https://car-pooling-management-backend.onrender.com/api';
 };
 
 const API_URL = normalizeApiBaseUrl(process.env.REACT_APP_API_URL) || getDefaultApiBaseUrl();
