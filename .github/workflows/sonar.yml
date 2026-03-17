@@ -25,7 +25,7 @@ jobs:
         run: npm install
 
       - name: SonarCloud Scan
-      uses: SonarSource/sonarcloud-github-action@v2
-     env:
-    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
