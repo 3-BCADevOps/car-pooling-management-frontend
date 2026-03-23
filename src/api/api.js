@@ -13,18 +13,25 @@ const normalizeApiBaseUrl = (rawUrl) => {
   return `${trimmedUrl}/api`;
 };
 
-const getDefaultApiBaseUrl = () => {
+const buildApiBaseUrlCandidates = () => {
+  const envUrl = normalizeApiBaseUrl(process.env.REACT_APP_API_URL);
+  const primaryAzureUrl = normalizeApiBaseUrl(
+    'https://carpool-management-frontend-dkerctcsfydydbgh.southeastasia-01.azurewebsites.net'
+  );
+  const previousCloudUrl = normalizeApiBaseUrl('https://car-pooling-management-backend.onrender.com');
+  const localhostUrl = normalizeApiBaseUrl('http://localhost:8080');
+
   if (typeof window !== 'undefined') {
     const localHostnames = ['localhost', '127.0.0.1', '::1'];
     if (localHostnames.includes(window.location.hostname)) {
-      return 'http://localhost:8080/api';
+      return [envUrl, localhostUrl, primaryAzureUrl, previousCloudUrl].filter(Boolean);
     }
-    return 'https://car-pooling-management-backend.onrender.com/api';
   }
-  return 'https://car-pooling-management-backend.onrender.com/api';
-};
 
-const API_URL = normalizeApiBaseUrl(process.env.REACT_APP_API_URL) || getDefaultApiBaseUrl();
+  return [envUrl, primaryAzureUrl, previousCloudUrl].filter(Boolean);
+};
+const API_BASE_URLS = [...new Set(buildApiBaseUrlCandidates())];
+const API_URL = API_BASE_URLS[0];
 
 const api = axios.create({
   baseURL: API_URL,
@@ -32,6 +39,31 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const requestConfig = error?.config;
+    if (!requestConfig) {
+      return Promise.reject(error);
+    }
+
+    const currentBaseUrl = normalizeApiBaseUrl(requestConfig.baseURL || api.defaults.baseURL);
+    const currentIndex = API_BASE_URLS.indexOf(currentBaseUrl);
+    const nextIndex = currentIndex + 1;
+
+    // Retry only for network-level failures and only when another fallback URL exists.
+    if (error.response || nextIndex >= API_BASE_URLS.length || requestConfig.__fallbackAttempted) {
+      return Promise.reject(error);
+    }
+
+    requestConfig.__fallbackAttempted = true;
+    requestConfig.baseURL = API_BASE_URLS[nextIndex];
+    api.defaults.baseURL = API_BASE_URLS[nextIndex];
+
+    return api(requestConfig);
+  }
+);
 
 // User API calls
 export const userAPI = {
