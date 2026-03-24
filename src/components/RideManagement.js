@@ -111,15 +111,30 @@ const RideManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this ride?')) {
-      try {
-        await rideAPI.delete(id);
-        setError('');
-        fetchRides();
-      } catch (err) {
-        setError('Failed to delete ride');
-        console.error(err);
-      }
+    const enteredPassword = window.prompt('Enter password to delete this ride:');
+
+    if (enteredPassword === null) return;
+
+    const normalizedPassword = enteredPassword.trim();
+    if (!normalizedPassword) {
+      alert('Password is required. Delete action denied.');
+      return;
+    }
+
+    if (normalizedPassword !== 'admin123') {
+      alert('Incorrect password. Delete action denied.');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this ride?')) return;
+
+    try {
+      await rideAPI.delete(id);
+      setError('');
+      fetchRides();
+    } catch (err) {
+      setError('Failed to delete ride');
+      console.error(err);
     }
   };
 

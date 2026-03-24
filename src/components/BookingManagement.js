@@ -132,15 +132,30 @@ const BookingManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this booking?')) {
-      try {
-        await bookingAPI.delete(id);
-        setError('');
-        fetchBookings();
-      } catch (err) {
-        setError('Failed to delete booking');
-        console.error(err);
-      }
+    const enteredPassword = window.prompt('Enter password to delete this booking:');
+
+    if (enteredPassword === null) return;
+
+    const normalizedPassword = enteredPassword.trim();
+    if (!normalizedPassword) {
+      alert('Password is required. Delete action denied.');
+      return;
+    }
+
+    if (normalizedPassword !== 'admin123') {
+      alert('Incorrect password. Delete action denied.');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this booking?')) return;
+
+    try {
+      await bookingAPI.delete(id);
+      setError('');
+      fetchBookings();
+    } catch (err) {
+      setError('Failed to delete booking');
+      console.error(err);
     }
   };
 
